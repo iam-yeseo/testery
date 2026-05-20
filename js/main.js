@@ -8,11 +8,28 @@ document.addEventListener("DOMContentLoaded", () => {
   const gnb = document.querySelector(".gnb");
   const hero = document.querySelector(".hero, .intro-hero");
   if (gnb && hero) {
+    const mobileQuery = window.matchMedia("(max-width: 768px)");
     let ticking = false;
+    let lastScrollY = window.scrollY;
     const updateGnbState = () => {
       const headerHeight = gnb.offsetHeight;
       const heroBottom = hero.offsetTop + hero.offsetHeight;
-      gnb.classList.toggle("gnb--over-hero", window.scrollY + headerHeight < heroBottom);
+      const scrollY = Math.max(window.scrollY, 0);
+      const scrollDelta = scrollY - lastScrollY;
+
+      gnb.classList.toggle("gnb--over-hero", scrollY + headerHeight < heroBottom);
+
+      if (mobileQuery.matches) {
+        if (scrollY <= headerHeight || scrollDelta < -6) {
+          gnb.classList.remove("gnb--mobile-hidden");
+        } else if (scrollDelta > 6) {
+          gnb.classList.add("gnb--mobile-hidden");
+        }
+      } else {
+        gnb.classList.remove("gnb--mobile-hidden");
+      }
+
+      lastScrollY = scrollY;
       ticking = false;
     };
     const requestGnbUpdate = () => {
@@ -23,7 +40,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateGnbState();
     window.addEventListener("scroll", requestGnbUpdate, { passive: true });
-    window.addEventListener("resize", requestGnbUpdate);
+    window.addEventListener("resize", () => {
+      lastScrollY = Math.max(window.scrollY, 0);
+      requestGnbUpdate();
+    });
+    if (mobileQuery.addEventListener) {
+      mobileQuery.addEventListener("change", requestGnbUpdate);
+    } else {
+      mobileQuery.addListener(requestGnbUpdate);
+    }
   }
 
   /* ===== 가로 슬라이드: 마우스 드래그 스크롤 ===== */
